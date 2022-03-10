@@ -1,17 +1,13 @@
 mod config;
+mod db;
+mod handlers;
 mod models;
 
-use actix_web::{web, App, HttpResponse, HttpServer, Responder};
+use crate::handlers::*;
+use actix_web::{web, App, HttpServer};
 use deadpool_postgres::Runtime;
 use dotenv::dotenv;
-use models::Status;
 use tokio_postgres::NoTls;
-
-async fn status() -> impl Responder {
-    HttpResponse::Ok().json(Status {
-        status: "Ok".to_string(),
-    })
-}
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -27,8 +23,9 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         App::new()
-            .app_data(pool.clone())
+            .data(pool.clone())
             .route("/", web::get().to(status))
+            .route("/todos", web::get().to(get_todos))
     })
     .bind((config.server.host, config.server.port))?
     .run()
